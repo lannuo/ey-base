@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:task="http://www.springframework.org/schema/task"
+	   xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+		http://www.springframework.org/schema/mvc
+		http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+		http://www.springframework.org/schema/task
+        http://www.springframework.org/schema/task/spring-task-4.2.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.2.xsd">
+		
+	<mvc:annotation-driven />
+	<mvc:default-servlet-handler />
+
+	<context:component-scan base-package="cn.sky999.controller"/>
+	<!--&lt;!&ndash; 访问拦截 &ndash;&gt;-->
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/**/**" />
+			<mvc:exclude-mapping path="/**/*.css"/>
+			<mvc:exclude-mapping path="/**/*.js"/>
+			<mvc:exclude-mapping path="/**/*.png"/>
+			<mvc:exclude-mapping path="/**/*.gif"/>
+			<mvc:exclude-mapping path="/**/*.jpg"/>
+			<mvc:exclude-mapping path="/**/*.jpeg"/>
+			<mvc:exclude-mapping path="/**/*.html"/>
+			<mvc:exclude-mapping path="/**/*.txt"/>
+			<bean class="cn.sky999.interceptor.HandlerInterceptor">
+				<property name="uncheckUrls">
+					<list>
+						<value>/app</value>
+						<value>/mobile</value>
+					</list>
+				</property>
+			</bean>
+		</mvc:interceptor>
+		<mvc:interceptor>
+			<mvc:mapping path="/file/upload"/>
+			<bean class="cn.sky999.interceptor.FileTypeInterceptor"/>
+		</mvc:interceptor>
+	</mvc:interceptors>
+
+	<!--配置全局跨域请求  -->
+	<mvc:cors>
+		<mvc:mapping path="/**" allowed-origins="*" allow-credentials="true" max-age="1800" allowed-methods="GET,POST,OPTIONS"/>
+	</mvc:cors>
+
+	<!-- 配置SpringMVC的视图解析器 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	
+	<!-- 上传拦截，如最大上传值及最小上传值 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="10485760"/>
+		<property name="maxInMemorySize" value="1024"/>
+		<property name="defaultEncoding" value="utf-8"/>
+	</bean>
+
+	<bean id="logAspect" class="cn.sky999.aspect.LogAspect" />
+	<aop:config>
+		<aop:pointcut expression="execution(* cn.sky999.controller..*(..)) and @annotation(logAnnotation)" id="logPc" />
+		<aop:aspect ref="logAspect">
+			<!-- 配置前置通知 -->
+			<!-- 切入点表达式 1.execution()固定的，不可省略 2.public 可以省略 3.返回值 void、int... -> * 4.方法参数..表示任意参数 -->
+			<aop:before method="before" pointcut-ref="logPc" />
+			<aop:after-throwing method="afterThrowing" pointcut-ref="logPc" throwing="ex" />
+			<aop:after method="after" pointcut-ref="logPc" />
+		</aop:aspect>
+	</aop:config>
+		<!-- 定时器开关 开始 -->
+	<bean id="timerTask" class="cn.sky999.task.TimerTask"></bean>
+	<task:scheduled-tasks>   
+        <task:scheduled ref="timerTask" method="clearSysLog" cron="0 0 1 * * ?"/>
+<!--         <task:scheduled ref="timerTask" method="clearDayInfo" cron="*/5 * * * * 1-7"/> -->
+	</task:scheduled-tasks>
+	<task:annotation-driven />
+	<!-- 定时器开关 结束 -->
+	
+</beans>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ConfigMapper">
+	<resultMap type="cn.sky999.baseEntity.Config" id="configMap">
+		<id column="CONFIG_ID" property="configId" />
+		<result column="CONFIG_NAME" property="configName" />
+		<result column="CONFIG_VALUE" property="configValue" />
+		<result column="SORT_NO" property="sortNo" />
+		<result column="REMARK" property="remark" />
+	</resultMap>
+
+	<select id="findConfigList" parameterType="cn.sky999.baseEntity.Config" resultMap="configMap">
+		select * from T_SYS_CONFIG
+		where 1=1
+		<if test="configId != null and configId!=''">
+			and (CONFIG_ID like CONCAT('%',#{configId},'%') or CONFIG_NAME like CONCAT('%',#{configId},'%'))
+		</if>
+		order by SORT_NO asc
+	</select>
+</mapper>

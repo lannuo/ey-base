@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:cache="http://www.springframework.org/schema/cache"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+xmlns:aop="http://www.springframework.org/schema/aop" xmlns:p="http://www.springframework.org/schema/p"
+xmlns:tx="http://www.springframework.org/schema/tx"
+xsi:schemaLocation="http://www.springframework.org/schema/beans
+					http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+					http://www.springframework.org/schema/context
+					http://www.springframework.org/schema/context/spring-context-4.2.xsd
+					http://www.springframework.org/schema/tx
+					http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+					http://www.springframework.org/schema/aop
+					http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+					http://www.springframework.org/schema/cache  
+       			http://www.springframework.org/schema/cache/spring-cache-4.3.xsd">
+    <!-- Spring中引入其他配置文件 -->
+    <import resource="classpath*:/spring/spring-wechat.xml" />
+	<!-- 启用注解 -->
+	<context:annotation-config />
+
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+	
+	<!-- 启动组件扫描，排除@Controller组件，该组件由SpringMVC配置文件扫描 -->
+	<context:component-scan base-package="cn.sky999">
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	
+	<!-- 读取参数配置 -->
+	<bean id="propertyConfigurer" class="cn.sky999.util.CustomizedPropertyConfigurer">
+		<property name="locations">  
+			<list>  
+                 <value>classpath:baseDb.properties</value>
+                 <value>classpath:dbConfig.properties</value>
+                 <value>classpath:redis.properties</value>
+                 <value>classpath:db.properties</value>
+            </list>  
+        </property>  
+	</bean> 
+   
+   <!-- 阿里 druid数据库连接池 -->
+    <!--基础数据源-->
+	<bean id="baseDataSource" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
+         <!-- 数据库基本信息配置 -->
+         <property name="url" value="${baseUrl}" />
+         <property name="username" value="${baseUsername}" />
+         <property name="password" value="${basePassword}" />
+         <property name="driverClassName" value="${driverClassName}" />  
+         <property name="filters" value="${filters}" />  
+   		 <!-- 最大并发连接数 -->
+         <property name="maxActive" value="${maxActive}" />
+         <!-- 初始化连接数量 -->
+         <property name="initialSize" value="${initialSize}" />
+         <!-- 配置获取连接等待超时的时间 -->
+         <property name="maxWait" value="${maxWait}" />
+         <!-- 最小空闲连接数 -->
+         <property name="minIdle" value="${minIdle}" />  
+   		 <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+         <property name="timeBetweenEvictionRunsMillis" value="${timeBetweenEvictionRunsMillis}" />
+         <!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+         <property name="minEvictableIdleTimeMillis" value="${minEvictableIdleTimeMillis}" />  
+         <property name="validationQuery" value="${validationQuery}" />  
+         <property name="testWhileIdle" value="${testWhileIdle}" />  
+         <property name="testOnBorrow" value="${testOnBorrow}" />  
+         <property name="testOnReturn" value="${testOnReturn}" />  
+         <property name="maxOpenPreparedStatements" value="${maxOpenPreparedStatements}" />
+         <!-- 打开removeAbandoned功能 -->
+         <property name="removeAbandoned" value="${removeAbandoned}" />
+         <!-- 1800秒，也就是30分钟 -->
+         <property name="removeAbandonedTimeout" value="${removeAbandonedTimeout}" />
+         <!-- 关闭abanded连接时输出错误日志 -->   
+         <property name="logAbandoned" value="${logAbandoned}" />
+	</bean>
+    <!--业务数据源-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
+        <!-- 数据库基本信息配置 -->
+        <property name="url" value="${url}" />
+        <property name="username" value="${username}" />
+        <property name="password" value="${password}" />
+        <property name="driverClassName" value="${driverClassName}" />
+        <property name="filters" value="${filters}" />
+        <!-- 最大并发连接数 -->
+        <property name="maxActive" value="${maxActive}" />
+        <!-- 初始化连接数量 -->
+        <property name="initialSize" value="${initialSize}" />
+        <!-- 配置获取连接等待超时的时间 -->
+        <property name="maxWait" value="${maxWait}" />
+        <!-- 最小空闲连接数 -->
+        <property name="minIdle" value="${minIdle}" />
+        <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+        <property name="timeBetweenEvictionRunsMillis" value="${timeBetweenEvictionRunsMillis}" />
+        <!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+        <property name="minEvictableIdleTimeMillis" value="${minEvictableIdleTimeMillis}" />
+        <property name="validationQuery" value="${validationQuery}" />
+        <property name="testWhileIdle" value="${testWhileIdle}" />
+        <property name="testOnBorrow" value="${testOnBorrow}" />
+        <property name="testOnReturn" value="${testOnReturn}" />
+        <property name="maxOpenPreparedStatements" value="${maxOpenPreparedStatements}" />
+        <!-- 打开removeAbandoned功能 -->
+        <property name="removeAbandoned" value="${removeAbandoned}" />
+        <!-- 1800秒，也就是30分钟 -->
+        <property name="removeAbandonedTimeout" value="${removeAbandonedTimeout}" />
+        <!-- 关闭abanded连接时输出错误日志 -->
+        <property name="logAbandoned" value="${logAbandoned}" />
+    </bean>
+
+    <!-- 配置hibernate的SessionFactory -->
+    <!--基础-->
+    <bean id="baseSessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <!-- 注入数据源 相关信息看源码 -->
+        <property name="dataSource" ref="baseDataSource" />
+        <!-- hibernate配置信息 -->
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+                <prop key="hibernate.show_sql">false</prop>
+                <prop key="hibernate.format_sql">true</prop>
+                 <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate5.SpringSessionContext</prop>
+            </props>
+        </property>
+        <!-- 扫描hibernate注解配置的entity -->
+        <property name="packagesToScan" value="cn.sky999.baseEntity" />
+    </bean>
+    <!-- 业务 -->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <!-- 注入数据源 相关信息看源码 -->
+        <property name="dataSource" ref="dataSource" />
+        <!-- hibernate配置信息 -->
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+                <prop key="hibernate.show_sql">false</prop>
+                <prop key="hibernate.format_sql">true</prop>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate5.SpringSessionContext</prop>
+            </props>
+        </property>
+        <!-- 扫描hibernate注解配置的entity -->
+        <property name="packagesToScan" value="cn.sky999.entity" />
+    </bean>
+
+    <!-- 配置事务管理器 -->
+    <!--基础-->
+    <bean id="baseTransactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="baseSessionFactory" />
+    </bean>
+    <!--业务-->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+
+    <!-- 配置事务增强处理Bean，指定事务管理器 -->
+    <!--基础-->
+    <tx:advice id="baseTxAdvice" transaction-manager="baseTransactionManager">
+        <!-- 配置详细事务处理语义 -->
+        <tx:attributes>
+            <tx:method name="save*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="update*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="delete*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="add*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="modify*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="trans*" propagation="REQUIRED" rollback-for="Exception"/>
+            <!-- 其他采用默认事务方式 -->
+            <tx:method name="*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+    <!--业务-->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <!-- 配置详细事务处理语义 -->
+        <tx:attributes>
+            <tx:method name="save*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="update*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="delete*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="modify*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="add*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="trans*" propagation="REQUIRED" rollback-for="Exception"/>
+            <!-- 其他采用默认事务方式 -->
+            <tx:method name="*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- Spring aop事务管理 -->
+    <aop:config>
+        <!-- 配置切入点，匹配多个表达式，与@Transactional注解合用，事物管理启用最外层的注解 -->
+        <aop:pointcut id="pc" expression="execution(* cn.sky999.service..*(..))||execution(* cn.sky999.dao..*(..))"  />
+        <!-- 指定在txAdvice切入点应用txAdvice事务增强处理 -->
+        <!--基础-->
+        <aop:advisor pointcut-ref="pc" advice-ref="baseTxAdvice" />
+        <!--业务-->
+        <aop:advisor pointcut-ref="pc" advice-ref="txAdvice" />
+    </aop:config>
+
+    <!-- Mybatis配置 -->
+    <!-- sql会话模版 -->
+    <!--基础-->
+    <bean id="baseSqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg ref="baseSqlSessionFactory" />
+    </bean>
+    <!--业务-->
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="sqlSessionFactory" />
+	</bean>
+	<!-- 配置mybatis -->
+    <!--基础-->
+    <bean id="baseSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="baseDataSource" />
+        <property name="configLocation" value="classpath:mybatis/mybatis-config.xml"></property>
+        <!-- mapper扫描 -->
+        <property name="mapperLocations">
+            <list>
+                <value>classpath*:mybatis/*/*.xml</value>
+                <value>classpath*:mybatis/*/*/*.xml</value>
+            </list>
+        </property>
+        <!-- pageHelper配置-->
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <value>
+                            helperDialect=mysql
+                        </value>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+    <!--业务-->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+    	<property name="dataSource" ref="dataSource" />
+        <property name="configLocation" value="classpath:mybatis/mybatis-config.xml"></property>
+        <!-- mapper扫描 -->
+        <property name="mapperLocations">
+            <list>
+                <value>classpath*:mybatis1/*/*.xml</value>
+                <value>classpath*:mybatis1/*/*/*.xml</value>
+            </list>
+        </property>
+        <!-- pageHelper配置-->
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <value>
+                            helperDialect=mysql
+                        </value>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+
+    <!-- 上传拦截，如最大上传值及最小上传值 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize">
+			<value>104857600</value>
+		</property>
+		<property name="maxInMemorySize">
+			<value>4096</value>
+		</property>
+		<property name="defaultEncoding">
+			<value>utf-8</value>
+		</property>
+	</bean>
+    <!--spring助手类-->
+    <bean id="SpringUtils" class="cn.sky999.util.SpringUtils" lazy-init="false"/>
+	<!-- 引入同文件夹下的redis属性配置文件 -->
+  	<context:property-placeholder location="classpath:redis.properties" />  
+    <!-- 启用缓存注解功能，这个是必须的，否则注解不会生效，另外，该注解一定要声明在spring主配置文件中才会生效 -->  
+    <cache:annotation-driven cache-manager="cacheManager" />  
+     <!-- redis 相关配置 -->
+    <!-- 将session放入redis -->
+     <bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig">  
+         <property name="maxIdle" value="${redis.maxIdle}" />   
+         <property name="maxWaitMillis" value="${redis.maxWait}" />  
+         <property name="testOnBorrow" value="${redis.testOnBorrow}" />  
+     </bean>  
+
+     <bean id="JedisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"  
+       p:host-name="${redis.host}"
+       p:port="${redis.port}" 
+       p:password="${redis.pass}" 
+       p:pool-config-ref="poolConfig"/>  
+     <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">  
+         <property name="connectionFactory" ref="JedisConnectionFactory" />
+         <property name="keySerializer">  
+        	<bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />  
+    	</property>
+     </bean>  
+     <!-- spring自己的缓存管理器，这里定义了缓存位置名称 ，即注解中的value -->  
+     <bean id="cacheManager" class="org.springframework.cache.support.SimpleCacheManager">  
+         <property name="caches">  
+            <set>  
+                <bean class="cn.sky999.redis.RedisCache">
+                     <property name="redisTemplate" ref="redisTemplate" />  
+                     <property name="name" value="redis1"/>  
+                     <!-- redis1名称要在类或方法的注解中使用 -->
+                </bean>
+            </set>  
+         </property>  
+     </bean>
+</beans>

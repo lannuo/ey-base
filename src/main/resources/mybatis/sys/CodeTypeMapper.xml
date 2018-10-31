@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CodeTypeMapper">
+	<resultMap type="cn.sky999.baseEntity.CodeType" id="codeTypeMap">
+		<id column="TYPE_ID" property="typeId" />
+		<result column="TYPE_NAME" property="typeName" />
+		<result column="SORT_NO" property="sortNo" />
+		<result column="REMARK" property="remark" />
+	</resultMap>
+
+	<select id="findCodeTypeList" parameterType="cn.sky999.baseEntity.CodeType" resultMap="codeTypeMap">
+		select * from T_SYS_CODE_TYPE
+		where 1=1
+		<if test="typeId != null and typeId!=''">
+			and 
+			(
+				TYPE_ID like CONCAT('%',#{typeId},'%')
+				or TYPE_NAME like CONCAT('%',#{typeId},'%')
+			)
+		</if>
+		order by TYPE_ID asc
+	</select>
+</mapper>

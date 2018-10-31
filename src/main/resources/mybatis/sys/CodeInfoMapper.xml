@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CodeInfoMapper">
+	<resultMap type="cn.sky999.baseEntity.CodeInfo" id="codeInfoMap">
+		<id column="INFO_ID" property="infoId" />
+		<result column="TYPE_ID" property="typeId" />
+		<result column="INFO_VALUE" property="infoValue" />
+		<result column="INFO_CONTENT" property="infoContent" />
+		<result column="SORT_NO" property="sortNo" />
+		<result column="REMARK" property="remark" />
+	</resultMap>
+
+	<select id="findCodeInfoList" parameterType="String" resultMap="codeInfoMap">
+		select * from T_SYS_CODE_INFO
+		where 1=1
+		<if test="typeId != null">
+			and TYPE_ID = #{typeId}
+		</if>
+		order by SORT_NO asc
+	</select>
+	<select id="findCodeInfoAandCodeTypeList" parameterType="String" resultMap="codeInfoMap">
+		select info.* 
+		from T_SYS_CODE_INFO info, T_SYS_CODE_TYPE type
+		where info.TYPE_ID=type.TYPE_ID ORDER BY info.TYPE_ID,info.SORT_NO
+	</select>
+	<select id="getInfoContent" parameterType="java.util.HashMap" resultMap="codeInfoMap">
+		select * from T_SYS_CODE_INFO
+		where 1=1
+		<if test="typeId != null and typeId!=''">
+			and TYPE_ID = #{typeId}
+		</if>
+		<if test="infoValue != null and infoValue!=''">
+			and INFO_VALUE = #{infoValue}
+		</if>
+		order by SORT_NO asc
+	</select>
+</mapper>
